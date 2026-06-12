@@ -39,92 +39,6 @@
     <div class="flex justify-between items-end mb-4">
       <h3 class="text-2xl font-bold text-slate-800">분석 리포트</h3>
       <button onclick="downloadPDF()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded shadow flex items-center gap-2 transition">
-        PDF로 다운로드
-      </button>
-    </div>
-    
-    <div id="pdfContent" class="bg-white border border-slate-200 rounded-xl p-8 shadow-sm markdown-body">
-      <div id="loading" class="text-center text-slate-500 py-10 hidden">
-        <p>AI가 수문학 데이터와 방재 매뉴얼을 매칭하여 리포트를 생성 중입니다...</p>
-      </div>
-      <div id="resultContent" class="text-slate-800"></div>
-    </div>
-  </section>
-
-  <script>
-    function parseMarkdown(text) {
-      let html = text.replace(/^### (.*$)/gim, '<h2>$1</h2>')
-                     .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-                     .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-                     .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
-                     .replace(/\*(.*)\*/gim, '<em>$1</em>')
-                     .replace(/^\* (.*$)/gim, '<ul><li>$1</li></ul>')
-                     .replace(/^\- (.*$)/gim, '<ul><li>$1</li></ul>')
-                     .replace(/\n/gim, '<br>');
-      html = html.replace(/<\/ul><br><ul>/gim, '');
-      return html;
-    }
-
-    async function analyzeRisk() {
-      const address = document.getElementById("address").value;
-      if (!address) {
-        alert("주소를 입력해주세요.");
-        return;
-      }
-
-      document.getElementById("reportSection").classList.remove("hidden");
-      document.getElementById("resultContent").innerHTML = "";
-      document.getElementById("loading").classList.remove("hidden");
-
-      try {
-        const response = await fetch("/analyze", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ address })
-        });
-
-        const data = await response.json();
-        document.getElementById("loading").classList.add("hidden");
-        document.getElementById("resultContent").innerHTML = parseMarkdown(data.answer);
-      } catch (error) {
-        document.getElementById("loading").classList.add("hidden");
-        document.getElementById("resultContent").innerHTML = "<p class='text-red-500'>서버 통신 중 오류가 발생했습니다.</p>";
-      }
-    }
-
-    document.getElementById("address").addEventListener("keydown", function(event) {
-      if (event.key === "Enter") {
-        event.preventDefault();
-        analyzeRisk();
-      }
-    });
-
-    function downloadPDF() {
-      const element = document.getElementById('pdfContent');
-      const address = document.getElementById("address").value || "지역";
-      
-      const opt = {
-        margin:       10,
-        filename:     `LÄNDLEGUARD_홍수위험분석_${address}.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2 },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      };
-
-      html2pdf().set(opt).from(element).save();
-    }
-  </script>
-</body>
-</html>      <button id="sendBtn" onclick="analyzeRisk()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-r-lg font-bold transition text-lg whitespace-nowrap">
-        위험도 분석
-      </button>
-    </div>
-  </section>
-
-  <section class="max-w-4xl mx-auto px-4 py-8 hidden" id="reportSection">
-    <div class="flex justify-between items-end mb-4">
-      <h3 class="text-2xl font-bold text-slate-800">분석 리포트</h3>
-      <button onclick="downloadPDF()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded shadow flex items-center gap-2 transition">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
@@ -137,8 +51,7 @@
         <div class="animate-spin inline-block w-8 h-8 border-[3px] border-current border-t-transparent text-blue-600 rounded-full mb-2" role="status" aria-label="loading"></div>
         <p>AI가 수문학 데이터와 방재 매뉴얼을 매칭하여 리포트를 생성 중입니다...</p>
       </div>
-      <div id="resultContent" class="text-slate-800">
-        </div>
+      <div id="resultContent" class="text-slate-800"></div>
     </div>
   </section>
 
@@ -150,7 +63,6 @@
   </footer>
 
   <script>
-    // 마크다운 형태의 응답을 간단한 HTML로 변환하는 함수
     function parseMarkdown(text) {
       let html = text.replace(/^### (.*$)/gim, '<h2>$1</h2>')
                      .replace(/^## (.*$)/gim, '<h2>$1</h2>')
@@ -160,7 +72,6 @@
                      .replace(/^\* (.*$)/gim, '<ul><li>$1</li></ul>')
                      .replace(/^\- (.*$)/gim, '<ul><li>$1</li></ul>')
                      .replace(/\n/gim, '<br>');
-      // 연속된 ul 태그 합치기
       html = html.replace(/<\/ul><br><ul>/gim, '');
       return html;
     }
@@ -192,7 +103,6 @@
       }
     }
 
-    // 엔터키 처리
     document.getElementById("address").addEventListener("keydown", function(event) {
       if (event.key === "Enter") {
         event.preventDefault();
@@ -200,7 +110,6 @@
       }
     });
 
-    // PDF 다운로드 함수 (html2pdf.js 사용)
     function downloadPDF() {
       const element = document.getElementById('pdfContent');
       const address = document.getElementById("address").value || "지역";
