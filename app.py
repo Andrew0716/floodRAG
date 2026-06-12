@@ -17,9 +17,14 @@ app.secret_key = "landleguard-secret-key"
 # ==========================================
 # 1. LLM 및 API 설정 (Tensorix API 적용)
 # ==========================================
+tensorix_api_key = os.getenv("TENSORIX_API_KEY")
+
+if not tensorix_api_key:
+    raise ValueError("TENSORIX_API_KEY 환경변수가 설정되어 있지 않습니다.")
+
 llm = ChatOpenAI(
     model_name="moonshotai/kimi-k2.5",
-    openai_api_key="sk-rxscDJ1H-sxt4wRJ93zpIA",
+    openai_api_key=tensorix_api_key,  # 직접 적는 대신 변수 사용
     openai_api_base="https://api.tensorix.ai/v1",
     temperature=0
 )
