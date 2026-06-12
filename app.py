@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request, jsonify, render_template, session
+from flask import Flask, request, jsonify, render_template
 from langchain_openai import ChatOpenAI
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.document_loaders import PyPDFLoader
@@ -15,10 +15,8 @@ app.secret_key = "landleguard-secret-key"
 # ==========================================
 # 1. LLM 및 API 설정 
 # ==========================================
-# Render 환경변수에서 키를 가져옵니다. 
 tensorix_api_key = os.getenv("TENSORIX_API_KEY")
 
-# 만약 환경변수 설정이 안 되어 있다면 임시로 기존 키를 사용합니다.
 if not tensorix_api_key:
     tensorix_api_key = "sk-rxscDJ1H-sxt4wRJ93zpIA"
 
@@ -36,7 +34,6 @@ def initialize_rag():
     print("PDF 문서를 로드하고 RAG 시스템을 구축합니다...")
     docs = []
     
-    # PDF 파일 경로 (가장 상위 폴더의 data 폴더 안에 넣으세요)
     pdf_files = [
         "data/Hochwasservorsorge-in-BW.pdf",
         "data/BBK-Vorsorgen-fuer-Krisen-und-Katastrophen.pdf"
