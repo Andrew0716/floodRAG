@@ -1,4 +1,3 @@
-
 import os
 from flask import Flask, request, jsonify, render_template, session
 from langchain_openai import ChatOpenAI
@@ -9,34 +8,35 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.chains import create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.messages import SystemMessage
 
 app = Flask(__name__)
 app.secret_key = "landleguard-secret-key"
 
 # ==========================================
-# 1. LLM 및 API 설정 (Tensorix API 적용)
+# 1. LLM 및 API 설정 
 # ==========================================
+# Render 환경변수에서 키를 가져옵니다. 
 tensorix_api_key = os.getenv("TENSORIX_API_KEY")
 
+# 만약 환경변수 설정이 안 되어 있다면 임시로 기존 키를 사용합니다.
 if not tensorix_api_key:
-    raise ValueError("TENSORIX_API_KEY 환경변수가 설정되어 있지 않습니다.")
+    tensorix_api_key = "sk-rxscDJ1H-sxt4wRJ93zpIA"
 
 llm = ChatOpenAI(
     model_name="moonshotai/kimi-k2.5",
-    openai_api_key=tensorix_api_key,  # 직접 적는 대신 변수 사용
+    openai_api_key=tensorix_api_key,
     openai_api_base="https://api.tensorix.ai/v1",
     temperature=0
 )
 
 # ==========================================
-# 2. RAG 파이프라인 구축 (서버 시작 시 1회 로드)
+# 2. RAG 파이프라인 구축
 # ==========================================
 def initialize_rag():
     print("PDF 문서를 로드하고 RAG 시스템을 구축합니다...")
     docs = []
     
-    # PDF 파일 경로 (data 폴더 내에 위치해야 함)
+    # PDF 파일 경로 (가장 상위 폴더의 data 폴더 안에 넣으세요)
     pdf_files = [
         "data/Hochwasservorsorge-in-BW.pdf",
         "data/BBK-Vorsorgen-fuer-Krisen-und-Katastrophen.pdf"
@@ -49,25 +49,22 @@ def initialize_rag():
         else:
             print(f"경고: {file} 파일을 찾을 수 없습니다.")
 
-    # 문서 분할
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
     splits = text_splitter.split_documents(docs)
 
-    # 임베딩 및 FAISS 벡터 스토어 생성 (HuggingFace 무료 모델 사용)
-    embeddings = HuggingFaceEmbeddings(model_name="jhgan/ko-sroberta-multitask") # 한국어 특화 임베딩
+    embeddings = HuggingFaceEmbeddings(model_name="jhgan/ko-sroberta-multitask")
     if splits:
         vectorstore = FAISS.from_documents(splits, embeddings)
         retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
     else:
         retriever = None
-        print("문서가 없어 RAG 검색기를 초기화하지 못했습니다.")
         
     return retriever
 
 retriever = initialize_rag()
 
 # ==========================================
-# 3. 프롬프트 템플릿 설정 (FLIWAS 홍수 분석용)
+# 3. 프롬프트 템플릿 설정 
 # ==========================================
 system_prompt = (
     "너는 바덴뷔르템베르크(Baden-Württemberg) 지역의 지리적 데이터와 수문학적 특성을 분석하는 재난 방재 시스템 'LÄNDLEGUARD'의 핵심 AI야. "
@@ -109,11 +106,9 @@ def analyze():
 
     try:
         if rag_chain:
-            # RAG를 통해 컨텍스트 검색 후 답변 생성
             response = rag_chain.invoke({"input": f"내 집 주소는 '{address}'입니다. 홍수 위험을 분석해주세요."})
             answer = response["answer"]
         else:
-            # 문서가 없을 경우 일반 LLM 호출
             answer = llm.invoke(f"내 집 주소는 '{address}'입니다. 홍수 위험을 분석해주세요.").content
             
         return jsonify({"answer": answer})
@@ -121,5 +116,4 @@ def analyze():
         return jsonify({"answer": f"분석 중 오류가 발생했습니다: {str(e)}"}), 500
 
 if __name__ == "__main__":
-    # 로컬 테스트용
     app.run(debug=True, port=5000)
